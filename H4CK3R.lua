@@ -1,17 +1,22 @@
 --!strict
--- H4CK3R Loading Screen
+-- H4CK3R Loading Screen + Mobile Camlock Button
 
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
--- Tránh bị trùng lặp nếu load lại script nhiều lần
+-- 1. XÓA UI CŨ NẾU CÓ
 if playerGui:FindFirstChild("H4CK3R_Loading") then
     playerGui.H4CK3R_Loading:Destroy()
 end
+if playerGui:FindFirstChild("H4CK3R_MobileUI") then
+    playerGui.H4CK3R_MobileUI:Destroy()
+end
 
+-- 2. TẠO GIAO DIỆN LOADING SCREEN
 local gui = Instance.new("ScreenGui")
 gui.Name = "H4CK3R_Loading"
 gui.IgnoreGuiInset = true
@@ -56,38 +61,86 @@ fill.BackgroundColor3 = Color3.fromRGB(255, 35, 55)
 fill.BorderSizePixel = 0
 fill.Parent = bar
 
--- Chạy thanh loading
+-- 3. CHẠY THANH LOADING
 for progress = 1, 100 do
     fill.Size = UDim2.fromScale(progress / 100, 1)
     status.Text = "LOADING SYSTEM... " .. progress .. "%"
-    task.wait(0.025)
+    task.wait(0.02)
 end
 
 status.Text = "H4CK3R SYSTEM READY"
-task.wait(0.8)
+task.wait(0.6)
 
--- Dùng Tween làm mờ toàn bộ ScreenGui để chữ và khung cùng biến mất mượt mà
-local tweenInfo = TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+-- 4. HIỆU ỨNG MỜ DẦN VÀ XÓA MÀN HÌNH LOADING
+local tweenInfo = TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+local t1 = TweenService:Create(frame, tweenInfo, {BackgroundTransparency = 1})
+local t2 = TweenService:Create(title, tweenInfo, {TextTransparency = 1})
+local t3 = TweenService:Create(status, tweenInfo, {TextTransparency = 1})
+local t4 = TweenService:Create(bar, tweenInfo, {BackgroundTransparency = 1})
+local t5 = TweenService:Create(fill, tweenInfo, {BackgroundTransparency = 1})
 
--- Tạo hiệu ứng ẩn dần các thành phần
-local tween1 = TweenService:Create(frame, tweenInfo, {BackgroundTransparency = 1})
-local tween2 = TweenService:Create(title, tweenInfo, {TextTransparency = 1})
-local tween3 = TweenService:Create(status, tweenInfo, {TextTransparency = 1})
-local tween4 = TweenService:Create(bar, tweenInfo, {BackgroundTransparency = 1})
-local tween5 = TweenService:Create(fill, tweenInfo, {BackgroundTransparency = 1})
-
-tween1:Play()
-tween2:Play()
-tween3:Play()
-tween4:Play()
-tween5:Play()
-
-tween1.Completed:Wait()
+t1:Play() t2:Play() t3:Play() t4:Play() t5:Play()
+t1.Completed:Wait()
 gui:Destroy()
 
---------------------------------------------------
--- ĐOẠN NÀY LÀ NƠI BẠN GẮN MENU HẶC CODE HACK VÀO SAU KHI LOAD XONG
---------------------------------------------------
-print("H4CK3R UI Loaded Successfully!")
--- Ví dụ gọi script hack chính của bạn ở đây:
--- loadstring(game:HttpGet("LINK_SCRIPT_CHINH_CUA_BAN"))()
+--------------------------------------------------------------------------------
+-- 5. TẠO NÚT BẤM CAMLOCK ẢO TRÊN MÀN HÌNH ĐIỆN THOẠI
+--------------------------------------------------------------------------------
+local mobileGui = Instance.new("ScreenGui")
+mobileGui.Name = "H4CK3R_MobileUI"
+mobileGui.ResetOnSpawn = false
+mobileGui.Parent = playerGui
+
+local camButton = Instance.new("TextButton")
+camButton.Size = UDim2.new(0, 120, 0, 45)
+camButton.Position = UDim2.new(0.8, -60, 0.2, 0) -- Nằm ở góc phải màn hình, có thể kéo thả
+camButton.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+camButton.BorderColor3 = Color3.fromRGB(255, 35, 55)
+camButton.BorderSizePixel = 2
+camButton.Text = "CAMLOCK: OFF"
+camButton.TextColor3 = Color3.fromRGB(255, 35, 55)
+camButton.TextSize = 14
+camButton.Font = Enum.Font.GothamBold
+camButton.Parent = mobileGui
+
+-- Bo tròn nút cho đẹp
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 8)
+corner.Parent = camButton
+
+local Camera = workspace.CurrentCamera
+local targetPlayer: Player? = nil
+local camlockEnabled = false
+
+-- Hàm tìm player gần tâm màn hình nhất
+local function getClosestPlayer(): Player?
+    local closestPlr: Player? = nil
+    local shortestDist = math.huge
+    -- Lấy tâm màn hình điện thoại
+    local screenCenter = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= player and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+            local humanoid = p.Character:FindFirstChildOfClass("Humanoid")
+            if humanoid and humanoid.Health > 0 then
+                local vector, onScreen = Camera:WorldToViewportPoint(p.Character.HumanoidRootPart.Position)
+                if onScreen then
+                    local dist = (Vector2.new(vector.X, vector.Y) - screenCenter).Magnitude
+                    if dist < shortestDist then
+                        shortestDist = dist
+                        closestPlr = p
+                    end
+                end
+            end
+        end
+    end
+    return closestPlr
+end
+
+-- Sự kiện khi bấm vào nút Camlock trên màn hình điện thoại
+camButton.MouseButton1Click:Connect(function()
+    camlockEnabled = not camlockEnabled
+    if camlockEnabled then
+        targetPlayer = getClosestPlayer()
+        if targetPlayer and targetPlayer.Name then
+            camButton.Text =
