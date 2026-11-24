@@ -1,4 +1,5 @@
---!strict
+-- H4CK3R Loading Screen + Mobile AimLock
+
 local success, Aiming = pcall(function()
     return loadstring(game:HttpGet("https://raw.githubusercontent.com/Stefanuk12/Aiming/main/Examples/AimLock.lua"))()
 end)
