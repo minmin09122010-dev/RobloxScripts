@@ -8,7 +8,7 @@ local TweenService = game:GetService("TweenService")
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
--- 1. XÓA UI CŨ NẾU CÓ
+-- 1. XÓA UI CŨ NẾU CÓ TRÁNH BỊ TRÙNG
 if playerGui:FindFirstChild("H4CK3R_Loading") then
     playerGui.H4CK3R_Loading:Destroy()
 end
@@ -84,7 +84,7 @@ t1.Completed:Wait()
 gui:Destroy()
 
 --------------------------------------------------------------------------------
--- 5. TẠO NÚT BẤM CAMLOCK ẢO TRÊN MÀN HÌNH ĐIỆN THOẠI
+-- 5. TẠO NÚT BẤM CAMLOCK TRÊN MÀN HÌNH ĐIỆN THOẠI
 --------------------------------------------------------------------------------
 local mobileGui = Instance.new("ScreenGui")
 mobileGui.Name = "H4CK3R_MobileUI"
@@ -93,7 +93,7 @@ mobileGui.Parent = playerGui
 
 local camButton = Instance.new("TextButton")
 camButton.Size = UDim2.new(0, 120, 0, 45)
-camButton.Position = UDim2.new(0.8, -60, 0.2, 0) -- Nằm ở góc phải màn hình, có thể kéo thả
+camButton.Position = UDim2.new(0.8, -60, 0.2, 0)
 camButton.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 camButton.BorderColor3 = Color3.fromRGB(255, 35, 55)
 camButton.BorderSizePixel = 2
@@ -103,7 +103,6 @@ camButton.TextSize = 14
 camButton.Font = Enum.Font.GothamBold
 camButton.Parent = mobileGui
 
--- Bo tròn nút cho đẹp
 local corner = Instance.new("UICorner")
 corner.CornerRadius = UDim.new(0, 8)
 corner.Parent = camButton
@@ -112,11 +111,9 @@ local Camera = workspace.CurrentCamera
 local targetPlayer: Player? = nil
 local camlockEnabled = false
 
--- Hàm tìm player gần tâm màn hình nhất
 local function getClosestPlayer(): Player?
     local closestPlr: Player? = nil
     local shortestDist = math.huge
-    -- Lấy tâm màn hình điện thoại
     local screenCenter = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
 
     for _, p in ipairs(Players:GetPlayers()) do
@@ -137,10 +134,44 @@ local function getClosestPlayer(): Player?
     return closestPlr
 end
 
--- Sự kiện khi bấm vào nút Camlock trên màn hình điện thoại
 camButton.MouseButton1Click:Connect(function()
     camlockEnabled = not camlockEnabled
     if camlockEnabled then
         targetPlayer = getClosestPlayer()
         if targetPlayer and targetPlayer.Name then
-            camButton.Text =
+            camButton.Text = "LOCKED"
+            camButton.TextColor3 = Color3.fromRGB(0, 255, 100)
+            camButton.BorderColor3 = Color3.fromRGB(0, 255, 100)
+        else
+            camlockEnabled = false
+            camButton.Text = "NO TARGET"
+            task.delay(1, function()
+                if not camlockEnabled then camButton.Text = "CAMLOCK: OFF" end
+            end)
+        end
+    else
+        targetPlayer = nil
+        camButton.Text = "CAMLOCK: OFF"
+        camButton.TextColor3 = Color3.fromRGB(255, 35, 55)
+        camButton.BorderColor3 = Color3.fromRGB(255, 35, 55)
+    end
+end)
+
+RunService.RenderStepped:Connect(function()
+    if camlockEnabled and targetPlayer and targetPlayer.Character then
+        local hrp = targetPlayer.Character:FindFirstChild("HumanoidRootPart")
+        local humanoid = targetPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if hrp and humanoid and humanoid.Health > 0 then
+            Camera.CFrame = CFrame.new(Camera.CFrame.Position, hrp.Position)
+        else
+            camlockEnabled = false
+            targetPlayer = nil
+            camButton.Text = "LOST TARGET"
+            camButton.TextColor3 = Color3.fromRGB(255, 35, 55)
+            camButton.BorderColor3 = Color3.fromRGB(255, 35, 55)
+            task.delay(1, function()
+                camButton.Text = "CAMLOCK: OFF"
+            end)
+        end
+    end
+end)
