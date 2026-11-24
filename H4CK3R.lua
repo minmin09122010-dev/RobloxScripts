@@ -26,10 +26,8 @@ local H4CK3RSettings = {
 }
 getgenv().H4CK3RSettings = H4CK3RSettings
 
--- // Prediction Formula
+-- //
 function H4CK3RSettings.ApplyPredictionFormula(SelectedPart, Velocity)
-    -- [FIX] Thêm đoạn check nil đề phòng trường hợp Velocity không được truyền vào
-    Velocity = Velocity or Vector3.zero 
     return SelectedPart.CFrame + (Velocity * H4CK3RSettings.Prediction)
 end
 
@@ -57,8 +55,7 @@ function AimLockSettings.AimLockPosition(CameraMode)
     local BeizerData = {}
 
     -- // Hit to account prediction
-    -- [FIX] Bản gốc thiếu truyền Velocity vào đây, mình đã thêm vào để tránh lỗi
-    local Hit = H4CK3RSettings.ApplyPredictionFormula(AimingSelected.Part, AimingSelected.Velocity)
+    local Hit = H4CK3RSettings.ApplyPredictionFormula(AimingSelected.Part)
     local HitPosition = Hit.Position
 
     -- //
